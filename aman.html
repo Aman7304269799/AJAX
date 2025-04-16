@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Registration Page</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    .form-group {
+      margin-bottom: 10px;
+    }
+    input[type="text"], input[type="password"], datalist {
+      padding: 5px;
+      width: 250px;
+    }
+    #message {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Register</h2>
+<form id="registrationForm">
+  <div class="form-group">
+    <label>Name: <input type="text" id="name" required></label>
+  </div>
+  <div class="form-group">
+    <label>College: 
+      <input type="text" id="college" list="collegeList" required>
+      <datalist id="collegeList">
+        <!-- Populated dynamically -->
+      </datalist>
+    </label>
+  </div>
+  <div class="form-group">
+    <label>Username: <input type="text" id="username" required></label>
+  </div>
+  <div class="form-group">
+    <label>Password: <input type="password" id="password" required></label>
+  </div>
+  <div class="form-group">
+    <label>Retype Password: <input type="password" id="confirmPassword" required></label>
+  </div>
+  <button type="submit">Register</button>
+</form>
+
+<div id="message"></div>
+
+<script>
+  // Simulated backend data
+  const existingUsernames = ['john123', 'alice', 'mike99'];
+  const collegeNames = ['Harvard University', 'Stanford University', 'MIT', 'Yale University', 'Princeton'];
+
+  // Populate college suggestions
+  window.onload = function () {
+    const collegeList = document.getElementById('collegeList');
+    collegeNames.forEach(college => {
+      const option = document.createElement('option');
+      option.value = college;
+      collegeList.appendChild(option);
+    });
+  };
+
+  document.getElementById('registrationForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    const name = document.getElementById('name').value.trim();
+    const college = document.getElementById('college').value.trim();
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+
+    // AJAX simulation using XMLHttpRequest
+    const xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+        document.getElementById('message').innerText = xhr.responseText;
+      }
+    };
+
+    xhr.open("POST", "/register", true); // Dummy endpoint for example
+    xhr.setRequestHeader("Content-Type", "application/json");
+
+    // Simulate async validation logic
+    setTimeout(() => {
+      if (existingUsernames.includes(username)) {
+        xhr.responseText = "Username already exists.";
+        xhr.status = 200;
+        xhr.onreadystatechange(); // trigger manually
+      } else if (password !== confirmPassword) {
+        xhr.responseText = "Passwords do not match.";
+        xhr.status = 200;
+        xhr.onreadystatechange(); // trigger manually
+      } else {
+        // Add to "database"
+        existingUsernames.push(username);
+        xhr.responseText = "Successfully Registered";
+        xhr.status = 200;
+        xhr.onreadystatechange(); // trigger manually
+      }
+    }, 500);
+  });
+</script>
+
+</body>
+</html>
