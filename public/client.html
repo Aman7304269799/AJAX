@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Registration Page</title>
+  <style>
+    body { font-family: Arial; margin: 20px; }
+    input, select { margin-bottom: 10px; display: block; }
+    #message { color: green; margin-top: 10px; }
+    .error { color: red; font-size: 0.9em; }
+
+    #collegeSuggestions {
+      border: 1px solid #ccc;
+      max-height: 150px;
+      overflow-y: auto;
+      background: white;
+      position: absolute;
+      z-index: 1000;
+      width: 300px;
+    }
+    #collegeSuggestions div {
+      padding: 8px;
+      cursor: pointer;
+    }
+    #collegeSuggestions div:hover {
+      background-color: #f0f0f0;
+    }
+    .suggestion-wrapper {
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+  <h2>Register</h2>
+  <form id="registrationForm" onsubmit="submitForm(event)">
+    Name: <input type="text" id="name" required>
+
+    <div class="suggestion-wrapper">
+      College: 
+      <input type="text" id="college" onkeyup="suggestCollege()" autocomplete="off" required>
+      <div id="collegeSuggestions"></div>
+    </div>
+
+    Username: <input type="text" id="username" onblur="checkUsername()" required>
+    <div id="usernameMsg" class="error"></div>
+
+    Password: <input type="password" id="password" required>
+    Confirm Password: <input type="password" id="confirmPassword" onkeyup="checkPasswordMatch()" required>
+    <div id="passwordMsg" class="error"></div>
+
+    <button type="submit">Register</button>
+    <div id="message"></div>
+  </form>
+
+  <script>
+    function checkUsername() {
+      const username = document.getElementById('username').value;
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "/check-username", true);
+      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          const res = JSON.parse(xhr.responseText);
+          document.getElementById('usernameMsg').textContent = res.exists ? "Username already taken." : "";
+        }
+      };
+      xhr.send(JSON.stringify({ username }));
+    }
+
+    function checkPasswordMatch() {
+      const pass1 = document.getElementById('password').value;
+      const pass2 = document.getElementById('confirmPassword').value;
+      const msg = document.getElementById('passwordMsg');
+      msg.textContent = pass1 !== pass2 ? "Passwords do not match!" : "";
+    }
+
+    function suggestCollege() {
+      const input = document.getElementById('college').value;
+      if (input.trim() === "") {
+        document.getElementById('collegeSuggestions').innerHTML = "";
+        return;
+      }
+
+      const xhr = new XMLHttpRequest();
+      xhr.open("GET", "/suggest-college?query=" + encodeURIComponent(input), true);
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          const suggestions = JSON.parse(xhr.responseText);
+          const suggestionBox = document.getElementById('collegeSuggestions');
+          suggestionBox.innerHTML = "";
+          suggestions.forEach(college => {
+            const div = document.createElement("div");
+            div.textContent = college;
+            div.onclick = () => {
+              document.getElementById('college').value = college;
+              suggestionBox.innerHTML = "";
+            };
+            suggestionBox.appendChild(div);
+          });
+        }
+      };
+      xhr.send();
+    }
+
+    function submitForm(event) {
+      event.preventDefault();
+      const name = document.getElementById('name').value;
+      const college = document.getElementById('college').value;
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      if (password !== confirmPassword) {
+        document.getElementById('passwordMsg').textContent = "Passwords do not match!";
+        return;
+      }
+
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "/register", true);
+      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          const res = JSON.parse(xhr.responseText);
+          document.getElementById('message').textContent = res.message;
+        }
+      };
+      xhr.send(JSON.stringify({ name, college, username, password }));
+    }
+
+    // Close suggestion box on outside click
+    document.addEventListener('click', function (e) {
+      const box = document.getElementById('collegeSuggestions');
+      if (!document.getElementById('college').contains(e.target)) {
+        box.innerHTML = "";
+      }
+    });
+  </script>
+</body>
+</html>
